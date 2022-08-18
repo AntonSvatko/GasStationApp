@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+
+    </data>
+
+    <TableRow
+        android:id="@+id/table_heading_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
+            <TextView
+                android:id="@+id/name_text"
+                android:layout_width="0dp"
+                android:layout_column="0"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:textColor="@color/white"
+                android:text="Name"
+                android:textAlignment="center" />
+
+            <TextView
+                android:id="@+id/address_text"
+                android:layout_width="0dp"
+                android:layout_column="1"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:textColor="@color/white"
+                android:text="Address"
+                android:textAlignment="center" />
+
+            <TextView
+                android:id="@+id/number_of_visits_text"
+                android:layout_width="0dp"
+                android:layout_column="2"
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:textColor="@color/white"
+                android:baselineAligned="false"
+                android:text="Number of visits"
+                android:textAlignment="center" />
+        </TableRow>
+</layout>

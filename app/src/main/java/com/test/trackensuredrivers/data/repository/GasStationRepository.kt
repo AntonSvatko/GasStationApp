@@ -1,4 +1,4 @@
-package com.test.trackensuredrivers.data
+package com.test.trackensuredrivers.data.repository
 
 import com.test.trackensuredrivers.data.database.dao.GasStationDao
 import com.test.trackensuredrivers.data.model.GasStation

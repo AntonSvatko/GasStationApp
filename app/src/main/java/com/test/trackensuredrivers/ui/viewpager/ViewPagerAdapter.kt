@@ -4,7 +4,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.test.trackensuredrivers.ui.fragments.GasStationFragment
+import com.test.trackensuredrivers.ui.fragments.RefuelFragment
 import com.test.trackensuredrivers.ui.fragments.StatsGasStationFragment
 
 
@@ -12,7 +12,7 @@ class ViewPagerAdapter(fragmentManager: FragmentManager, lifecycle: Lifecycle) :
 
     override fun createFragment(position: Int): Fragment {
         return if (position == 0) {
-            GasStationFragment()
+            RefuelFragment()
         } else StatsGasStationFragment()
     }
 

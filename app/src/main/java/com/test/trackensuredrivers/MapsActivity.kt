@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.text.InputType
 import android.util.Log
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
@@ -25,8 +26,11 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.snackbar.Snackbar
 import com.test.trackensuredrivers.data.database.AppDataBase
+import com.test.trackensuredrivers.data.model.FuelType
 import com.test.trackensuredrivers.data.model.GasStation
+import com.test.trackensuredrivers.data.model.Refuel
 import com.test.trackensuredrivers.databinding.ActivityMapsBinding
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModel
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModelFactory
@@ -39,6 +43,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
     private lateinit var binding: ActivityMapsBinding
 
     private lateinit var viewModel: MainViewModel
+    private val refuelToSave = Refuel()
 
     private val fuesdLocationClient by lazy {
         LocationServices.getFusedLocationProviderClient(this)
@@ -61,6 +66,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
 
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val adapter: ArrayAdapter<String> = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            FuelType.values().map { it.toString() })
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.typeFuelSpinner.adapter = adapter
+
+        binding.saveBtn.setOnClickListener {
+            val amount = binding.amountEditText.text.toString().trim().toFloat()
+            val price = binding.priceEditText.text.toString().trim().toFloat()
+            val supplier = binding.supplierEditText.text.toString()
+            val type = binding.typeFuelSpinner.selectedItem.toString()
+
+            refuelToSave.amount = amount
+            refuelToSave.price = price
+            refuelToSave.type = type
+            refuelToSave.supplier = supplier
+
+            if (refuelToSave.nameGasStation.isNotEmpty()) {
+                if (amount != 0f && price != 0f)
+                    viewModel.insertRefuel(refuelToSave)
+                else
+                    Snackbar.make(binding.root, "Input all fields", Snackbar.LENGTH_SHORT).show()
+            } else
+                Snackbar.make(binding.root, "Chose gas station", Snackbar.LENGTH_SHORT).show()
+        }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
@@ -207,6 +239,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mMap.setOnMapLongClickListener(this)
+
+        mMap.setOnMarkerClickListener { marker ->
+            val position = marker.position
+            viewModel.allGasStation.observe(this) {
+                it.forEach { gasStation ->
+                    if (gasStation.latitude == position.latitude && gasStation.longitude == position.longitude) {
+                        refuelToSave.gasStationId = gasStation.id
+                        refuelToSave.nameGasStation = gasStation.name
+                    }
+                }
+            }
+            false
+        }
+
 
         viewModel.allGasStation.observe(this) {
             it?.forEach { gasStation ->

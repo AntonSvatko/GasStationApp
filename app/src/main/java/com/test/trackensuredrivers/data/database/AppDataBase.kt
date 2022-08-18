@@ -5,11 +5,14 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.test.trackensuredrivers.data.database.dao.GasStationDao
+import com.test.trackensuredrivers.data.database.dao.RefuelDao
 import com.test.trackensuredrivers.data.model.GasStation
+import com.test.trackensuredrivers.data.model.Refuel
 
-@Database(entities = [GasStation::class], version = 1)
+@Database(entities = [GasStation::class, Refuel::class], version = 2)
 abstract class AppDataBase : RoomDatabase() {
     abstract val gasStationDao: GasStationDao
+    abstract val refuelDao: RefuelDao
 
     companion object {
         @Volatile
