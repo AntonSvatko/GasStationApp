@@ -9,7 +9,7 @@ import com.test.trackensuredrivers.data.database.dao.RefuelDao
 import com.test.trackensuredrivers.data.model.GasStation
 import com.test.trackensuredrivers.data.model.Refuel
 
-@Database(entities = [GasStation::class, Refuel::class], version = 2)
+@Database(entities = [GasStation::class, Refuel::class], version = 3)
 abstract class AppDataBase : RoomDatabase() {
     abstract val gasStationDao: GasStationDao
     abstract val refuelDao: RefuelDao
@@ -24,7 +24,7 @@ abstract class AppDataBase : RoomDatabase() {
                     context.applicationContext,
                     AppDataBase::class.java,
                     "gas_stations_db"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

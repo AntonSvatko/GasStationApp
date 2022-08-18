@@ -38,15 +38,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_weight="1" />
+                android:layout_weight="1.2" />
 
             <EditText
                 android:id="@+id/amount_edit_text"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:inputType="number"
+                android:inputType="numberDecimal"
                 android:layout_weight="1"
+                android:maxLength="6"
                 android:hint="Amount" />
 
             <EditText
@@ -54,7 +55,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:inputType="number"
+                android:inputType="numberDecimal"
                 android:layout_weight="1"
                 android:hint="Price" />
         </androidx.appcompat.widget.LinearLayoutCompat>

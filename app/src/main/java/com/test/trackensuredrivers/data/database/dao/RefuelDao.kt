@@ -17,7 +17,7 @@ abstract class RefuelDao {
     abstract fun updateRefuel(refuel: Refuel)
 
     @Query("select * from refuel_table where id = :id")
-    abstract fun getRefuel(id: String): Refuel?
+    abstract fun getRefuel(id: Int): Refuel?
 
     @Query("select * from refuel_table")
     abstract fun getRefuel(): LiveData<List<Refuel>>

@@ -27,14 +27,14 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
-import com.test.trackensuredrivers.data.database.AppDataBase
 import com.test.trackensuredrivers.data.model.FuelType
 import com.test.trackensuredrivers.data.model.GasStation
 import com.test.trackensuredrivers.data.model.Refuel
 import com.test.trackensuredrivers.databinding.ActivityMapsBinding
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModel
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModelFactory
-import com.test.trackensuredrivers.utills.getAddress
+import com.test.trackensuredrivers.utills.Constants
+import com.test.trackensuredrivers.utills.toFloat
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickListener {
@@ -43,7 +43,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
     private lateinit var binding: ActivityMapsBinding
 
     private lateinit var viewModel: MainViewModel
-    private val refuelToSave = Refuel()
+    private var refuelToSave = Refuel()
 
     private val fuesdLocationClient by lazy {
         LocationServices.getFusedLocationProviderClient(this)
@@ -55,9 +55,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         val application = application
-        val dataSource = AppDataBase.getDatabase(application).gasStationDao
         val viewModelFactory = MainViewModelFactory(application)
         viewModel =
             ViewModelProvider(
@@ -74,9 +72,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.typeFuelSpinner.adapter = adapter
 
+        intent.extras?.getInt(Constants.SEND_REFUEL_INTENT_KEY)?.let {
+            viewModel.getRefuel(it).observe(this) { refuel ->
+                with(refuel) {
+                    binding.priceEditText.setText(price.toString())
+                    binding.amountEditText.setText(amount.toString())
+                    binding.supplierEditText.setText(supplier)
+
+                    refuelToSave = refuel
+
+                    binding.typeFuelSpinner.setSelection(if (type == FuelType.GAS.toString()) 1 else 0)
+                }
+            }
+        }
+
+
         binding.saveBtn.setOnClickListener {
-            val amount = binding.amountEditText.text.toString().trim().toFloat()
-            val price = binding.priceEditText.text.toString().trim().toFloat()
+            val amount = binding.amountEditText.text.toFloat()
+            val price = binding.priceEditText.text.toFloat()
             val supplier = binding.supplierEditText.text.toString()
             val type = binding.typeFuelSpinner.selectedItem.toString()
 
@@ -86,15 +99,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
             refuelToSave.supplier = supplier
 
             if (refuelToSave.nameGasStation.isNotEmpty()) {
-                if (amount != 0f && price != 0f)
+                if (amount != 0f && price != 0f && supplier.any { !it.isWhitespace() }) {
                     viewModel.insertRefuel(refuelToSave)
-                else
+                    finish()
+                } else
                     Snackbar.make(binding.root, "Input all fields", Snackbar.LENGTH_SHORT).show()
             } else
                 Snackbar.make(binding.root, "Chose gas station", Snackbar.LENGTH_SHORT).show()
         }
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -280,28 +293,28 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
 
     override fun onMapLongClick(latLng: LatLng) {
         val builder = android.app.AlertDialog.Builder(this)
-        builder.setTitle("Enter the name of the gas station")
+        builder.setTitle("Enter gas station name")
         val input = EditText(this)
         input.inputType = InputType.TYPE_CLASS_TEXT
         builder.setView(input)
         builder.setPositiveButton("OK") { dialog, which ->
-            val gasStationAddress: String = getAddress(latLng)
-            viewModel.insertGasStation(
-                GasStation(
-                    name = input.text.toString(),
-                    latitude = latLng.latitude,
-                    longitude = latLng.longitude
+            if (input.text.toString().trim().isNotEmpty()) {
+                viewModel.insertGasStation(
+                    GasStation(
+                        name = input.text.toString(),
+                        latitude = latLng.latitude,
+                        longitude = latLng.longitude
+                    )
                 )
-            )
-            mMap.addMarker(
-                MarkerOptions()
-                    .position(latLng)
-                    .title(input.text.toString())
-            )
+                mMap.addMarker(
+                    MarkerOptions()
+                        .position(latLng)
+                        .title(input.text.toString())
+                )
+            }
         }
         builder.setNegativeButton("Cancel") { dialog, which -> dialog.dismiss() }
         builder.show()
-
     }
 
     companion object {
@@ -310,4 +323,5 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
         private const val LOCATION_REFRESH_TIME = 15000L // 15 seconds to update
         private const val LOCATION_REFRESH_DISTANCE = 500f
     }
+
 }

@@ -13,6 +13,7 @@ import com.test.trackensuredrivers.databinding.FragmentRefuelBinding
 import com.test.trackensuredrivers.ui.adapters.RefuelAdapter
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModel
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModelFactory
+import com.test.trackensuredrivers.utills.Constants
 
 class RefuelFragment : Fragment() {
     private lateinit var binding: FragmentRefuelBinding
@@ -21,6 +22,11 @@ class RefuelFragment : Fragment() {
         RefuelAdapter { action, id ->
             if (action == R.id.delete)
                 viewModel.deleteRefuel(id)
+            else{
+                val intent = Intent(requireActivity(), MapsActivity::class.java)
+                intent.putExtra(Constants.SEND_REFUEL_INTENT_KEY, id)
+                startActivity(intent)
+            }
         }
     }
 

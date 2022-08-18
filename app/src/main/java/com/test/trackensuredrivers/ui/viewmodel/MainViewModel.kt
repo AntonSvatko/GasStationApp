@@ -29,10 +29,18 @@ class MainViewModel(private val application: Application) : ViewModel() {
     }
 
     fun insertRefuel(refuel: Refuel) {
-        refuelRepository.insert(refuel)
+        if (refuel.id == 0)
+            refuelRepository.insert(refuel)
+        else
+            refuelRepository.update(refuel)
     }
 
     fun deleteRefuel(id: Int) {
         refuelRepository.delete(id)
     }
+
+    fun getRefuel(id: Int): LiveData<Refuel> {
+        return refuelRepository.getRefuel(id)
+    }
+
 }
