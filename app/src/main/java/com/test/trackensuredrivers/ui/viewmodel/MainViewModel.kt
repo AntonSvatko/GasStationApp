@@ -2,6 +2,7 @@ package com.test.trackensuredrivers.ui.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.test.trackensuredrivers.data.database.AppDataBase
 import com.test.trackensuredrivers.data.model.GasStation
@@ -29,18 +30,36 @@ class MainViewModel(private val application: Application) : ViewModel() {
     }
 
     fun insertRefuel(refuel: Refuel) {
-        if (refuel.id == 0)
+        if (refuel.id == 0L) {
+            gasStationRepository.getGasStation(refuel.gasStationId) { gasStation ->
+                gasStation?.let {
+                    it.localAmount++
+                    it.totalAmount++
+                    gasStationRepository.update(it)
+                }
+            }
             refuelRepository.insert(refuel)
-        else
+        } else
             refuelRepository.update(refuel)
     }
 
-    fun deleteRefuel(id: Int) {
-        refuelRepository.delete(id)
+    fun deleteRefuel(refuel: Refuel) {
+        refuelRepository.delete(refuel.id)
+        gasStationRepository.getGasStation(refuel.gasStationId) { gasStation ->
+            gasStation?.let {
+                it.localAmount--
+                it.totalAmount--
+                gasStationRepository.update(it)
+            }
+        }
     }
 
-    fun getRefuel(id: Int): LiveData<Refuel> {
-        return refuelRepository.getRefuel(id)
+    fun getRefuel(id: Long): LiveData<Refuel> {
+        val refuel = MutableLiveData<Refuel>()
+        refuelRepository.getRefuel(id) {
+            refuel.postValue(it)
+        }
+        return refuel
     }
 
 }

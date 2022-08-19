@@ -9,6 +9,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.test.trackensuredrivers.R
 import com.test.trackensuredrivers.data.model.GasStation
 import com.test.trackensuredrivers.databinding.ItemStatsGasStationBinding
+import com.test.trackensuredrivers.utills.execute
 import com.test.trackensuredrivers.utills.getAddress
 
 class GasStationsAdapter :
@@ -20,10 +21,16 @@ class GasStationsAdapter :
     inner class GasStationHolder(private val binding: ItemStatsGasStationBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bindCall(gasStation: GasStation) {
-            binding.addressText.text =
-                itemView.context.getAddress(LatLng(gasStation.latitude, gasStation.longitude))
+            var address = "${gasStation.latitude},${gasStation.longitude}"
+            execute(bgrWork = {
+                address =
+                    itemView.context.getAddress(LatLng(gasStation.latitude, gasStation.longitude))
+            }, uiWork = {
+                binding.addressText.text = address
+            })
+
             binding.nameText.text = gasStation.name
-            binding.numberOfVisitsText.text = "0"
+            binding.numberOfVisitsText.text = gasStation.totalAmount.toString()
 
             binding.executePendingBindings()
         }

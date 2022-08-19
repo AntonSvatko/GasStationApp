@@ -31,6 +31,7 @@ import com.test.trackensuredrivers.data.model.FuelType
 import com.test.trackensuredrivers.data.model.GasStation
 import com.test.trackensuredrivers.data.model.Refuel
 import com.test.trackensuredrivers.databinding.ActivityMapsBinding
+import com.test.trackensuredrivers.service.SynchronizedService
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModel
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModelFactory
 import com.test.trackensuredrivers.utills.Constants
@@ -72,7 +73,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.typeFuelSpinner.adapter = adapter
 
-        intent.extras?.getInt(Constants.SEND_REFUEL_INTENT_KEY)?.let {
+        intent.extras?.getLong(Constants.SEND_REFUEL_INTENT_KEY)?.let {
             viewModel.getRefuel(it).observe(this) { refuel ->
                 with(refuel) {
                     binding.priceEditText.setText(price.toString())
@@ -101,6 +102,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
             if (refuelToSave.nameGasStation.isNotEmpty()) {
                 if (amount != 0f && price != 0f && supplier.any { !it.isWhitespace() }) {
                     viewModel.insertRefuel(refuelToSave)
+                    if(refuelToSave.id == 0L) {
+                        val intent = Intent(this, SynchronizedService::class.java)
+                        intent.putExtra(Constants.ADD_REFUEL_STATION_KEY, 0)
+                        startService(intent)
+                    }
                     finish()
                 } else
                     Snackbar.make(binding.root, "Input all fields", Snackbar.LENGTH_SHORT).show()
@@ -311,6 +317,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
                         .position(latLng)
                         .title(input.text.toString())
                 )
+                val intent = Intent(this, SynchronizedService::class.java)
+                intent.putExtra(Constants.ADD_GAS_STATION_KEY, 0)
+                startService(intent)
             }
         }
         builder.setNegativeButton("Cancel") { dialog, which -> dialog.dismiss() }

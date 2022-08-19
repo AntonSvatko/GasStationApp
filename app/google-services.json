@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "519551819841",
+    "project_id": "trackensuredrivers-2714f",
+    "storage_bucket": "trackensuredrivers-2714f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:519551819841:android:43a85af7e3f4f0bafba6c0",
+        "android_client_info": {
+          "package_name": "com.test.trackensuredrivers"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "519551819841-vr6apaf95okhi703094c9eb4tcpb91a2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCd59TdmG8GAuzutH0LBC3ZyvByUoFvv2U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "519551819841-vr6apaf95okhi703094c9eb4tcpb91a2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

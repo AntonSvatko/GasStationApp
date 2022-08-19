@@ -18,5 +18,17 @@ class GasStationRepository(private val dao: GasStationDao) {
         })
     }
 
+    fun getGasStation(id: Long, getGasStation: (GasStation?) -> Unit) {
+        execute(bgrWork = {
+            getGasStation(dao.getGasStation(id))
+        })
+    }
+
+    fun getLast(getGasStation: (GasStation?) -> Unit) {
+        execute(bgrWork = {
+            getGasStation(dao.getLast())
+        })
+    }
+
     fun getGasStations() = dao.getGasStations()
 }

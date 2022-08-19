@@ -7,10 +7,6 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import com.google.android.gms.maps.model.LatLng
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStream
-import java.io.InputStreamReader
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -22,6 +18,7 @@ inline fun execute(
 ) {
     val executor: ExecutorService = Executors.newSingleThreadExecutor()
     val handler = Handler(Looper.getMainLooper())
+
 
     executor.execute {
         bgrWork()

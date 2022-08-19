@@ -13,10 +13,11 @@ import com.test.trackensuredrivers.R
 import com.test.trackensuredrivers.data.model.GasStation
 import com.test.trackensuredrivers.data.model.Refuel
 import com.test.trackensuredrivers.databinding.ItemRefuelBinding
+import com.test.trackensuredrivers.utills.execute
 import com.test.trackensuredrivers.utills.getAddress
 
 
-class RefuelAdapter(private val callBack: (Int, Int) -> Unit) :
+class RefuelAdapter(private val callBack: (Int, Refuel) -> Unit) :
     androidx.recyclerview.widget.ListAdapter<Refuel, RefuelAdapter.RefuelHolder>(
         RefuelCallback()
     ) {
@@ -34,8 +35,18 @@ class RefuelAdapter(private val callBack: (Int, Int) -> Unit) :
             binding.supplierText.text = "Supplier: ${refuel.supplier}"
             val gasStation = listGasStations.find { it.id == refuel.gasStationId }
             gasStation?.let {
-                binding.addressText.text =
-                    itemView.context.getAddress(LatLng(gasStation.latitude, gasStation.longitude))
+                var address = "${gasStation.latitude},${gasStation.longitude}"
+                execute(bgrWork = {
+                    address =
+                        itemView.context.getAddress(
+                            LatLng(
+                                gasStation.latitude,
+                                gasStation.longitude
+                            )
+                        )
+                }, uiWork = {
+                    binding.addressText.text = address
+                })
                 binding.nameGasStationText.text = gasStation.name
             }
 
@@ -44,7 +55,7 @@ class RefuelAdapter(private val callBack: (Int, Int) -> Unit) :
                     inflate(R.menu.popup_menu)
                     gravity = Gravity.END
                     setOnMenuItemClickListener { item ->
-                        callBack(item.itemId, refuel.id)
+                        callBack(item.itemId, refuel)
                         true
                     }
                     show()

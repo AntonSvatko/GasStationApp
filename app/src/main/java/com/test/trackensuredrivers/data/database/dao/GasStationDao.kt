@@ -16,8 +16,11 @@ abstract class GasStationDao {
     abstract fun updateGasStation(gasStation: GasStation)
 
     @Query("select * from gas_station where id = :id")
-    abstract fun getGasStation(id: String): GasStation?
+    abstract fun getGasStation(id: Long): GasStation?
 
     @Query("select * from gas_station")
     abstract fun getGasStations(): LiveData<List<GasStation>>
+
+    @Query("select * from gas_station ORDER BY id DESC LIMIT 1")
+    abstract fun getLast(): GasStation
 }

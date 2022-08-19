@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.test.trackensuredrivers.MapsActivity
 import com.test.trackensuredrivers.R
 import com.test.trackensuredrivers.databinding.FragmentRefuelBinding
+import com.test.trackensuredrivers.service.SynchronizedService
 import com.test.trackensuredrivers.ui.adapters.RefuelAdapter
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModel
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModelFactory
@@ -19,12 +20,16 @@ class RefuelFragment : Fragment() {
     private lateinit var binding: FragmentRefuelBinding
     private lateinit var viewModel: MainViewModel
     private val adapter by lazy {
-        RefuelAdapter { action, id ->
-            if (action == R.id.delete)
-                viewModel.deleteRefuel(id)
+        RefuelAdapter { action, refuel ->
+            if (action == R.id.delete) {
+                val intent = Intent(requireActivity(), SynchronizedService::class.java)
+                intent.putExtra(Constants.DELETE_REFUEL_STATION_KEY, 0)
+                requireActivity().startService(intent)
+                viewModel.deleteRefuel(refuel)
+            }
             else{
                 val intent = Intent(requireActivity(), MapsActivity::class.java)
-                intent.putExtra(Constants.SEND_REFUEL_INTENT_KEY, id)
+                intent.putExtra(Constants.SEND_REFUEL_INTENT_KEY, refuel.id)
                 startActivity(intent)
             }
         }
