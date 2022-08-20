@@ -27,6 +27,7 @@
             android:layout_height="wrap_content"
             android:backgroundTint="@color/whitish"
             android:hint="Supplier"
+            android:textColorHint="@color/whitish"
             android:textColor="@color/white" />
 
         <androidx.appcompat.widget.LinearLayoutCompat
@@ -38,6 +39,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/whitish"
                 android:layout_weight="1.2" />
 
             <EditText
@@ -46,6 +49,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:inputType="numberDecimal"
+                android:textColorHint="@color/whitish"
+                android:textColor="@color/white"
                 android:layout_weight="1"
                 android:maxLength="6"
                 android:hint="Amount" />
@@ -55,7 +60,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:textColor="@color/white"
                 android:inputType="numberDecimal"
+                android:textColorHint="@color/whitish"
                 android:layout_weight="1"
                 android:hint="Price" />
         </androidx.appcompat.widget.LinearLayoutCompat>

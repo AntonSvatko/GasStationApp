@@ -46,7 +46,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
     private lateinit var viewModel: MainViewModel
     private var refuelToSave = Refuel()
 
-    private val fuesdLocationClient by lazy {
+    private val fusedLocationClient by lazy {
         LocationServices.getFusedLocationProviderClient(this)
     }
 
@@ -68,10 +68,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
 
         val adapter: ArrayAdapter<String> = ArrayAdapter(
             this,
-            android.R.layout.simple_spinner_item,
+            R.layout.spinner_item,
             FuelType.values().map { it.toString() })
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.typeFuelSpinner.adapter = adapter
+
+        val intentValue = intent.extras?.getLong(Constants.SEND_REFUEL_INTENT_KEY)
 
         intent.extras?.getLong(Constants.SEND_REFUEL_INTENT_KEY)?.let {
             viewModel.getRefuel(it).observe(this) { refuel ->
@@ -101,12 +103,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
 
             if (refuelToSave.nameGasStation.isNotEmpty()) {
                 if (amount != 0f && price != 0f && supplier.any { !it.isWhitespace() }) {
-                    viewModel.insertRefuel(refuelToSave)
-                    if(refuelToSave.id == 0L) {
-                        val intent = Intent(this, SynchronizedService::class.java)
-                        intent.putExtra(Constants.ADD_REFUEL_STATION_KEY, 0)
-                        startService(intent)
-                    }
+                    val isInsert = intentValue == null
+                    viewModel.insertRefuel(refuelToSave, isInsert)
+                    val intent = Intent(this, SynchronizedService::class.java)
+                    intent.putExtra(Constants.ADD_REFUEL_KEY, refuelToSave.id)
+                    startService(intent)
                     finish()
                 } else
                     Snackbar.make(binding.root, "Input all fields", Snackbar.LENGTH_SHORT).show()
@@ -126,20 +127,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
             )
             != PackageManager.PERMISSION_GRANTED
         ) {
-
-            // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(
                     this,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )
             ) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
                 AlertDialog.Builder(this)
                     .setTitle("Need location permission")
-//                    .setMessage("safalfa")
                     .setPositiveButton("OK") { dialogInterface, i -> //Prompt the user once explanation has been shown
                         ActivityCompat.requestPermissions(
                             this,
@@ -150,7 +144,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
                     .create()
                     .show()
             } else {
-                // No explanation needed, we can request the permission.
                 ActivityCompat.requestPermissions(
                     this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                     MY_PERMISSIONS_REQUEST_LOCATION
@@ -170,28 +163,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             MY_PERMISSIONS_REQUEST_LOCATION -> {
-
-                // If request is cancelled, the result arrays are empty.
                 if (grantResults.isNotEmpty()
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED
                 ) {
-
-                    // permission was granted, yay! Do the
-                    // location-related task you need to do.
                     if (ContextCompat.checkSelfPermission(
                             this,
                             Manifest.permission.ACCESS_FINE_LOCATION
                         )
                         == PackageManager.PERMISSION_GRANTED
                     ) {
-
-                        //Request location updates:
                         requestUpdateLocation()
                     }
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
                 }
                 return
             }
@@ -222,8 +204,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
 
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
             showGPSDisabledAlertToUser()
-
-
         val mLocationListener = LocationListener {
             Log.d("test2", it.longitude.toString())
         }
@@ -236,7 +216,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
         mMap.isMyLocationEnabled = true
 
         var currentLocation: Location
-        val task = fuesdLocationClient.lastLocation
+        val task = fusedLocationClient.lastLocation
         task.addOnSuccessListener {
             if (it != null) {
                 currentLocation = it
@@ -250,7 +230,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
                         15f
                     )
                 )
-//                mMap.addMarker(MarkerOptions().position(latLng))
             }
         }
     }
@@ -271,7 +250,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
             }
             false
         }
-
 
         viewModel.allGasStation.observe(this) {
             it?.forEach { gasStation ->
@@ -294,7 +272,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
         } else {
             requestUpdateLocation()
         }
-
     }
 
     override fun onMapLongClick(latLng: LatLng) {
@@ -329,7 +306,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnMapLongClickList
     companion object {
         private const val MY_PERMISSIONS_REQUEST_LOCATION = 99
 
-        private const val LOCATION_REFRESH_TIME = 15000L // 15 seconds to update
+        private const val LOCATION_REFRESH_TIME = 15000L
         private const val LOCATION_REFRESH_DISTANCE = 500f
     }
 

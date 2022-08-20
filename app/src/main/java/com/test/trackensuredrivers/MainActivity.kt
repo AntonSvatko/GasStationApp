@@ -19,6 +19,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.test.trackensuredrivers.App.Companion.auth
 import com.test.trackensuredrivers.service.SynchronizedService
+import com.test.trackensuredrivers.ui.viewpager.CustomOnTabSelectedListener
 import com.test.trackensuredrivers.ui.viewpager.ViewPagerAdapter
 import com.test.trackensuredrivers.utills.Constants
 
@@ -38,18 +39,6 @@ class MainActivity : AppCompatActivity() {
 
         client = GoogleSignIn.getClient(this, gso)
 
-        val myRef = App.database?.getReference("gas_stations")
-
-//        myRef?.setValue("Hello, World!")?.addOnCompleteListener {
-//            Log.d("test2", it.exception.toString())
-//        }
-
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//            startForegroundService(Intent(this, SynchronizedService::class.java))
-//        } else {
-
-//        }
-
         val intent = Intent(this, SynchronizedService::class.java)
         intent.putExtra(Constants.UPDATE_GAS_STATION_KEY, 0)
         startService(intent)
@@ -59,17 +48,16 @@ class MainActivity : AppCompatActivity() {
         pager.adapter = adapter
 
         val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
-        tabLayout.addTab(tabLayout.newTab().setText("Refuel"))
-        tabLayout.addTab(tabLayout.newTab().setText("Gas Stations"))
+        tabLayout.apply {
+            addTab(tabLayout.newTab().setText("Refuel"))
+            addTab(tabLayout.newTab().setText("Gas Stations"))
 
-        tabLayout.addOnTabSelectedListener(object : OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab) {
-                pager.currentItem = tab.position
-            }
-
-            override fun onTabUnselected(tab: TabLayout.Tab) {}
-            override fun onTabReselected(tab: TabLayout.Tab) {}
-        })
+            addOnTabSelectedListener(object : CustomOnTabSelectedListener() {
+                override fun onTabSelected(tab: TabLayout.Tab) {
+                    pager.currentItem = tab.position
+                }
+            })
+        }
 
         pager.registerOnPageChangeCallback(object : OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
@@ -105,8 +93,6 @@ class MainActivity : AppCompatActivity() {
             ?.addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     App.currentUser = auth?.currentUser
-                } else {
-                    Log.d("exe1", task.exception.toString() + "asfsa")
                 }
             }
     }

@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "refuel_table")
 data class Refuel(
-    @PrimaryKey(autoGenerate = true)
-    var id: Long = 0,
+    @PrimaryKey
+    var id: Long = System.currentTimeMillis(),
     var supplier: String = "",
     var isSynchronized: Boolean = false,
     var gasStationId: Long = 0,

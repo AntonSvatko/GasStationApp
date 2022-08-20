@@ -16,7 +16,6 @@ class GasStationsAdapter :
     androidx.recyclerview.widget.ListAdapter<GasStation, GasStationsAdapter.GasStationHolder>(
         GasStationCallback()
     ) {
-    private var holder: GasStationHolder? = null
 
     inner class GasStationHolder(private val binding: ItemStatsGasStationBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -47,7 +46,6 @@ class GasStationsAdapter :
     }
 
     override fun onBindViewHolder(holder: GasStationHolder, position: Int) {
-        this.holder = holder
         holder.bindCall(currentList[position])
     }
 }

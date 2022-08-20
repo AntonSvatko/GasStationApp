@@ -8,7 +8,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.google.firebase.database.DataSnapshot
@@ -24,12 +23,15 @@ import com.test.trackensuredrivers.data.model.Refuel
 import com.test.trackensuredrivers.data.repository.GasStationRepository
 import com.test.trackensuredrivers.data.repository.RefuelRepository
 import com.test.trackensuredrivers.utills.Constants
+import com.test.trackensuredrivers.utills.observeOnce
+
 
 class SynchronizedService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
+
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -41,24 +43,30 @@ class SynchronizedService : Service() {
         val gasStationRepository = GasStationRepository(gasStationDap)
         val refuelRepository = RefuelRepository(refuelDao)
 
-        if (intent?.extras?.containsKey(Constants.ADD_GAS_STATION_KEY) == true) {
+        val extras = intent?.extras
+
+        if (extras?.containsKey(Constants.ADD_GAS_STATION_KEY) == true) {
             gasStationRepository.getLast {
                 it?.localAmount = 0
-                App.database?.reference?.child("gas_station")?.child(it?.id.toString())
+                getGasStationList(it?.id)
                     ?.setValue(it)
+                    ?.addOnSuccessListener {
+                        stopSelf()
+                    }
             }
         }
-        if (intent?.extras?.containsKey(Constants.UPDATE_GAS_STATION_KEY) == true) {
+        if (extras?.containsKey(Constants.UPDATE_GAS_STATION_KEY) == true) {
             App.database?.reference?.child("gas_station")
                 ?.addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val gasStationList = snapshot.getValue<HashMap<String, GasStation>>()
                         gasStationList?.forEach { gasStation ->
                             var isUpdated = false
-                            gasStationRepository.getGasStations().observeForever {
+                            gasStationRepository.getGasStations().observeOnce {
                                 if (!isUpdated) {
                                     isUpdated = true
-                                    val localGasStation = it.find { gasStation.value.id == it.id }
+                                    val localGasStation =
+                                        it.find { gasStation.value.id == it.id }
                                     if (localGasStation == null) {
                                         gasStationRepository.insert(gasStation.value)
                                     } else {
@@ -68,92 +76,137 @@ class SynchronizedService : Service() {
                                 }
                             }
                         }
-                    }
 
-                    override fun onCancelled(error: DatabaseError) {
-
-                    }
-                })
-
-            if (!App.auth?.uid.isNullOrEmpty()) {
-                App.database?.reference?.child("refuels")?.child(App.auth?.uid.toString())
-                    ?.addValueEventListener(object : ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            Log.d("test6", snapshot.value.toString())
-                            val gasStationList = snapshot.getValue<HashMap<String, Refuel>>()
-                            gasStationList?.forEach { gasStation ->
-                                var isUpdated = false
-                                refuelRepository.getRefuels().observeForever {
-                                    if (!isUpdated) {
-                                        isUpdated = true
-                                        val localGasStation =
-                                            it.find { gasStation.value.id == it.id }
-                                        if (localGasStation == null) {
-                                            refuelRepository.insert(gasStation.value)
-                                        } else {
-                                            refuelRepository.update(gasStation.value)
+                        if (!App.auth?.uid.isNullOrEmpty()) {
+                            App.database?.reference?.child("refuels")
+                                ?.child(App.auth?.uid.toString())
+                                ?.addValueEventListener(object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+                                        var refuelList = listOf<Refuel?>()
+                                        kotlin.runCatching {
+                                            refuelList =
+                                                snapshot.getValue<HashMap<String, Refuel?>>()?.values?.toList()
+                                                    ?: listOf()
+                                        }.onFailure {
+                                            refuelList =
+                                                snapshot.getValue<List<Refuel?>>() ?: listOf()
                                         }
+
+                                        refuelRepository.getRefuels().observeOnce {
+                                            refuelList.forEach { gasStation ->
+                                                if (gasStation != null) {
+                                                    val localGasStation =
+                                                        it.find { gasStation.id == it.id }
+                                                    if (localGasStation == null) {
+                                                        refuelRepository.insert(gasStation)
+                                                    } else {
+                                                        refuelRepository.update(gasStation)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        refuelRepository.getRefuels().observeOnce {
+                                            if (refuelList.size < it.size) {
+                                                it.forEach { localItem ->
+                                                    val needDeleteItem =
+                                                        refuelList.find { it?.id == localItem.id }
+                                                    if (needDeleteItem == null) {
+                                                        refuelRepository.delete(localItem.id)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        stopSelf()
                                     }
-                                }
-                            }
-                        }
 
-                        override fun onCancelled(error: DatabaseError) {}
-                    })
-            }
-        }
-        if (intent?.extras?.containsKey(Constants.ADD_REFUEL_STATION_KEY) == true) {
-            val idGasStation = intent.extras?.getLong(Constants.ADD_REFUEL_STATION_KEY)!!
-            var isUpdated = false
-            refuelRepository.getLast {
-                if (!App.auth?.uid.isNullOrEmpty())
-                    App.database?.reference?.child("refuels")
-                        ?.child(App.auth?.uid.toString())
-                        ?.child(it?.id.toString())
-                        ?.setValue(it)
-            }
-
-            App.database?.reference?.child("gas_station")?.child(idGasStation.toString())
-                ?.addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        val gasStation = snapshot.getValue<GasStation>()
-                        gasStationRepository.getGasStation(idGasStation) {
-                            if (gasStation != null) {
-                                if (!isUpdated) {
-                                    isUpdated = true
-                                    gasStation.totalAmount += it?.localAmount ?: 0
-                                    it?.localAmount = 0
-                                    App.database?.reference?.child("gas_station")
-                                        ?.child(it?.id.toString())
-                                        ?.setValue(it)
-                                }
-                            }
+                                    override fun onCancelled(error: DatabaseError) {}
+                                })
                         }
                     }
 
                     override fun onCancelled(error: DatabaseError) {}
                 })
+
         }
-        if (intent?.extras?.containsKey(Constants.DELETE_REFUEL_STATION_KEY) == true) {
-            val id = intent.extras?.getLong(Constants.DELETE_REFUEL_STATION_KEY)!!
+        if (extras?.containsKey(Constants.ADD_REFUEL_KEY) == true) {
+            var isUpdated = false
+            refuelRepository.getLast { refuel ->
+                if (!App.auth?.uid.isNullOrEmpty())
+                    App.database?.reference?.child("refuels")
+                        ?.child(App.auth?.uid.toString())
+                        ?.child(refuel?.id.toString())
+                        ?.setValue(refuel)?.addOnSuccessListener {
+                            getGasStationList(refuel?.gasStationId)
+                                ?.addValueEventListener(object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+                                        val gasStation = snapshot.getValue<GasStation>()
+                                        gasStationRepository.getGasStation(
+                                            refuel?.gasStationId ?: 0L
+                                        ) {
+                                            if (gasStation != null) {
+                                                if (!isUpdated) {
+                                                    isUpdated = true
+                                                    gasStation.totalAmount += 1
+                                                    getGasStationList(gasStation.id)
+                                                        ?.setValue(gasStation)
+                                                        ?.addOnSuccessListener {
+                                                            stopSelf()
+                                                        }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    override fun onCancelled(error: DatabaseError) {}
+                                })
+                        }
+            }
+        }
+
+        if (extras?.containsKey(Constants.DELETE_REFUEL_STATION_KEY) == true) {
+            val id = intent.extras?.getLongArray(Constants.DELETE_REFUEL_STATION_KEY)
+                ?: longArrayOf()
             if (!App.auth?.uid.isNullOrEmpty())
-                gasStationRepository.getLast {
-                    it?.localAmount = 0
-                    App.database?.reference?.child("refuels")?.child(App.auth?.uid.toString())
-                        ?.child(id.toString())
-                        ?.removeValue()
-                }
+                App.database?.reference?.child("refuels")?.child(App.auth?.uid.toString())
+                    ?.child(id[0].toString())
+                    ?.removeValue()?.addOnSuccessListener {
+                        var isUpdated = false
+                        App.database?.reference?.child("gas_station")
+                            ?.child(id[1].toString())
+                            ?.addValueEventListener(object : ValueEventListener {
+                                override fun onDataChange(snapshot: DataSnapshot) {
+                                    val gasStation = snapshot.getValue<GasStation>()
+                                    gasStationRepository.getGasStation(
+                                        id[1]
+                                    ) {
+                                        if (gasStation != null) {
+                                            if (!isUpdated) {
+                                                isUpdated = true
+                                                gasStation.totalAmount -= 1
+                                                getGasStationList(gasStation.id)
+                                                    ?.setValue(gasStation)
+                                                    ?.addOnSuccessListener {
+                                                        stopSelf()
+                                                    }
+                                            }
+                                        }
+                                    }
+                                    stopSelf()
+                                }
+
+                                override fun onCancelled(error: DatabaseError) {}
+                            })
+
+                    }
         }
-
-
-//        gasStationRepository.getGasStations().observeForever {
-//            App.database?.reference?.child("gas_station")?.setValue(it)?.addOnCompleteListener {
-//                Log.d("test3", it.toString())
-//            }
-//        }
 
         return START_NOT_STICKY
     }
+
+    fun getGasStationList(id: Long?) =
+        App.database?.reference?.child("gas_station")
+            ?.child(id.toString())
+
 
     private var iconNotification: Bitmap? = null
     private var notification: Notification? = null

@@ -9,7 +9,7 @@ import com.test.trackensuredrivers.data.database.dao.RefuelDao
 import com.test.trackensuredrivers.data.model.GasStation
 import com.test.trackensuredrivers.data.model.Refuel
 
-@Database(entities = [GasStation::class, Refuel::class], version = 7)
+@Database(entities = [GasStation::class, Refuel::class], version = 9)
 abstract class AppDataBase : RoomDatabase() {
     abstract val gasStationDao: GasStationDao
     abstract val refuelDao: RefuelDao

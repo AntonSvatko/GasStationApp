@@ -6,6 +6,7 @@ import android.location.Geocoder
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
+import androidx.lifecycle.LiveData
 import com.google.android.gms.maps.model.LatLng
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -51,4 +52,13 @@ fun Context.getAddress(latLng: LatLng): String {
 
 fun Editable.toFloat(): Float =
     toString().trim().takeIf { it.isNotEmpty() }?.toFloat() ?: 0f
+
+fun <T> LiveData<T>.observeOnce(observer: androidx.lifecycle.Observer<T>) {
+    observeForever( object : androidx.lifecycle.Observer<T> {
+        override fun onChanged(t: T?) {
+            observer.onChanged(t)
+            removeObserver(this)
+        }
+    })
+}
 

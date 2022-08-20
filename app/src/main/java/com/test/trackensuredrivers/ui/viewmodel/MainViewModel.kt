@@ -10,7 +10,7 @@ import com.test.trackensuredrivers.data.model.Refuel
 import com.test.trackensuredrivers.data.repository.GasStationRepository
 import com.test.trackensuredrivers.data.repository.RefuelRepository
 
-class MainViewModel(private val application: Application) : ViewModel() {
+class MainViewModel(application: Application) : ViewModel() {
     var allGasStation: LiveData<List<GasStation>>
     var allRefuel: LiveData<List<Refuel>>
     private val gasStationRepository: GasStationRepository
@@ -29,29 +29,15 @@ class MainViewModel(private val application: Application) : ViewModel() {
         gasStationRepository.insert(gasStation)
     }
 
-    fun insertRefuel(refuel: Refuel) {
-        if (refuel.id == 0L) {
-            gasStationRepository.getGasStation(refuel.gasStationId) { gasStation ->
-                gasStation?.let {
-                    it.localAmount++
-                    it.totalAmount++
-                    gasStationRepository.update(it)
-                }
-            }
+    fun insertRefuel(refuel: Refuel, isInsert: Boolean) {
+        if (isInsert)
             refuelRepository.insert(refuel)
-        } else
+        else
             refuelRepository.update(refuel)
     }
 
     fun deleteRefuel(refuel: Refuel) {
         refuelRepository.delete(refuel.id)
-        gasStationRepository.getGasStation(refuel.gasStationId) { gasStation ->
-            gasStation?.let {
-                it.localAmount--
-                it.totalAmount--
-                gasStationRepository.update(it)
-            }
-        }
     }
 
     fun getRefuel(id: Long): LiveData<Refuel> {

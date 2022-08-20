@@ -12,18 +12,17 @@ import com.test.trackensuredrivers.R
 import com.test.trackensuredrivers.databinding.FragmentRefuelBinding
 import com.test.trackensuredrivers.service.SynchronizedService
 import com.test.trackensuredrivers.ui.adapters.RefuelAdapter
+import com.test.trackensuredrivers.ui.base.BaseFragment
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModel
 import com.test.trackensuredrivers.ui.viewmodel.MainViewModelFactory
 import com.test.trackensuredrivers.utills.Constants
 
-class RefuelFragment : Fragment() {
-    private lateinit var binding: FragmentRefuelBinding
-    private lateinit var viewModel: MainViewModel
+class RefuelFragment : BaseFragment<FragmentRefuelBinding>(R.layout.fragment_refuel) {
     private val adapter by lazy {
         RefuelAdapter { action, refuel ->
             if (action == R.id.delete) {
                 val intent = Intent(requireActivity(), SynchronizedService::class.java)
-                intent.putExtra(Constants.DELETE_REFUEL_STATION_KEY, 0)
+                intent.putExtra(Constants.DELETE_REFUEL_STATION_KEY, longArrayOf(refuel.id, refuel.gasStationId))
                 requireActivity().startService(intent)
                 viewModel.deleteRefuel(refuel)
             }
@@ -33,22 +32,6 @@ class RefuelFragment : Fragment() {
                 startActivity(intent)
             }
         }
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentRefuelBinding.inflate(inflater)
-        val application = requireActivity().application
-        val viewModelFactory = MainViewModelFactory(application)
-        viewModel =
-            ViewModelProvider(
-                this, viewModelFactory
-            )[MainViewModel::class.java]
-
-        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
